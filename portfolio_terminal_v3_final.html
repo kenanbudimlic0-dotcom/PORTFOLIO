@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Terminal v3</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/tabler-icons.min.css">
+  
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg0:#0b0f14;--bg1:#111823;--bg2:#1a2333;--bg3:#243048;
+      --border:#1e2d42;--border2:#2a3d5a;
+      --txt:#e2eaf4;--txt2:#8faec8;--txt3:#4d6a85;
+      --green:#00c853;--green-bg:#00c85314;
+      --red:#ff3d3d;--red-bg:#ff3d3d14;
+      --blue:#2962ff;--blue-dim:#1a3fcc;--blue-bg:#2962ff18;
+      --amber:#f4a800;--amber-bg:#f4a80018;
+      --font:ui-monospace,'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+    }
+    body{font-family:var(--font);background:var(--bg0);color:var(--txt);font-size:13px;line-height:1.5}
+    .app{background:var(--bg0);min-height:600px}
+
+    .topbar{background:var(--bg1);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:0;flex-wrap:wrap}
+    .logo{font-size:12px;font-weight:700;color:var(--blue);letter-spacing:.14em;text-transform:uppercase;padding:12px 16px 12px 0;border-right:1px solid var(--border);margin-right:4px;display:flex;align-items:center;gap:6px}
+    .nav-tabs{display:flex;gap:0;flex:1;align-items:center;flex-wrap:wrap}
+    .ntab{padding:0 14px;height:44px;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;color:var(--txt2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;letter-spacing:.04em;transition:color .15s;white-space:nowrap}
+    .ntab i{font-size:14px}
+    .ntab:hover{color:var(--txt)}
+    .ntab.active{color:var(--blue);border-bottom:2px solid var(--blue)}
+    .topbar-right{margin-left:auto;display:flex;gap:12px;align-items:center}
+    .sync-status{font-size:10px;color:var(--green);display:flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid var(--border);border-radius:4px}
+    .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+    .panel{display:none;padding:16px}.panel.active{display:block}
+
+    .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+    .mcard{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+    .mcard-label{font-size:10px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+    .mcard-val{font-size:18px;font-weight:500;color:var(--txt);font-variant-numeric:tabular-nums}
+    .mcard-val.g{color:var(--green)}.mcard-val.r{color:var(--red)}.mcard-val.a{color:var(--amber)}
+    .mcard-sub{font-size:10px;color:var(--txt3);margin-top:3px}
+
+    .section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .section-hdr-controls{margin-left:auto;display:flex;gap:6px;align-items:center}
+    .sort-select{background:var(--bg2);border:1px solid var(--border2);color:var(--txt);font-family:var(--font);font-size:11px;height:28px;padding:0 8px;border-radius:4px;outline:none;cursor:pointer}
+    .section-hdr-line{flex:1;height:1px;background:var(--border)}
+    .section-hdr-label{font-size:10px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+
+    .tbl-wrap{background:var(--bg1);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    thead{background:var(--bg2)}
+    th{padding:9px 13px;text-align:left;font-size:10px;font-weight:500;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)}
+    td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--txt);white-space:nowrap;font-size:12px;vertical-align:middle}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:var(--bg2)}
+    .num{font-variant-numeric:tabular-nums}
+    .g{color:var(--green)}.r{color:var(--red)}.a{color:var(--amber)}
+    .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+    .tag-buy{background:var(--green-bg);color:var(--green);border:1px solid #00c85330}
+    .tag-sell{background:var(--red-bg);color:var(--red);border:1px solid #ff3d3d30}
+    .tag-eur{background:var(--blue-bg);color:var(--blue);border:1px solid #2962ff30}
+    .tag-usd{background:var(--amber-bg);color:var(--amber);border:1px solid #f4a80030}
+    .pct-badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:500}
+    .pct-pos{background:var(--green-bg);color:var(--green)}.pct-neg{background:var(--red-bg);color:var(--red)}
+    .empty-state{padding:36px;text-align:center;color:var(--txt3);font-size:12px}
+    .empty-state i{font-size:28px;display:block;margin-bottom:8px;color:var(--bg3)}
+
+    .form-section{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:14px}
+    .form-section-title{font-size:10px;color:var(--txt3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+    .field{display:flex;flex-direction:column;gap:5px}
+    .field label{font-size:10px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase}
+    .field input,.field select{background:var(--bg2);border:1px solid var(--border2);color:var(--txt);font-family:var(--font);font-size:12px;height:36px;padding:0 11px;border-radius:6px;outline:none;transition:border-color .15s,box-shadow .15s}
+    .field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+    .field input::placeholder{color:var(--txt3)}
+    .field select option{background:var(--bg2)}
+    .btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{height:34px;padding:0 16px;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid var(--border2);display:flex;align-items:center;gap:6px;letter-spacing:.03em;white-space:nowrap}
+    .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .btn-primary:hover{background:var(--blue-dim)}
+    .btn-ghost{background:transparent;color:var(--txt2)}
+    .btn-ghost:hover{background:var(--bg2);color:var(--txt)}
+    .btn-danger{background:transparent;color:var(--red);border-color:#ff3d3d30}
+    .btn-danger:hover{background:var(--red-bg)}
+    .btn-sm{height:28px;padding:0 10px;font-size:11px;border-radius:4px}
+    .btn:active{transform:scale(.97)}
+    .save-msg{font-size:11px;color:var(--green);display:none;align-items:center;gap:4px}
+
+    /* NEUE BUTTON STYLES - SICHTBAR! */
+    .btn-edit{background:var(--blue);color:#fff;border-color:var(--blue);height:28px;padding:0 8px;font-size:11px}
+    .btn-edit:hover{background:var(--blue-dim)}
+    .btn-delete{background:var(--red);color:#fff;border-color:var(--red);height:28px;padding:0 8px;font-size:11px}
+    .btn-delete:hover{background:#cc2d2d}
+    .action-buttons{display:flex;gap:4px;white-space:nowrap}
+
+    .suggestions-box{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px}
+    .suggestions-label{font-size:9px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+    .suggestion-item{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg1);border:1px solid var(--border);border-radius:4px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+    .suggestion-item:hover{background:var(--bg3);border-color:var(--blue)}
+    .suggestion-symbol{font-weight:700;color:var(--blue);min-width:50px}
+    .suggestion-info{flex:1;font-size:11px}
+    .suggestion-qty{color:var(--txt2);font-size:10px}
+    .suggestion-action{color:var(--green);font-size:10px;font-weight:500}
+
+    .price-input{background:var(--bg2);border:1px solid var(--border2);color:var(--txt);font-family:var(--font);font-size:12px;height:30px;padding:0 9px;border-radius:5px;outline:none;width:120px;transition:border-color .15s,box-shadow .15s;font-variant-numeric:tabular-nums}
+    .price-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+
+    .div-input{background:var(--bg2);border:1px solid var(--border2);color:var(--txt);font-family:var(--font);font-size:12px;height:30px;padding:0 9px;border-radius:5px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
+    .div-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;display:inline-block}
+
+    .info-box{background:var(--bg2);border:1px solid var(--green);border-radius:6px;padding:12px;margin:16px 0;font-size:12px;color:var(--txt2)}
+
+    .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center}
+    .modal.active{display:flex}
+    .modal-content{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:20px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+    .modal-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:16px}
+    .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--txt3);cursor:pointer;font-size:20px}
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="logo"><i class="ti ti-chart-candle" aria-hidden="true"></i>Portfolio v3</div>
+    <div class="nav-tabs">
+      <button class="ntab active" onclick="switchTab('dashboard')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</button>
+      <button class="ntab" onclick="switchTab('positions')"><i class="ti ti-table" aria-hidden="true"></i>Positionen</button>
+      <button class="ntab" onclick="switchTab('trades')"><i class="ti ti-list" aria-hidden="true"></i>Journal</button>
+      <button class="ntab" onclick="switchTab('add')"><i class="ti ti-plus" aria-hidden="true"></i>Trade erfassen</button>
+      <button class="ntab" onclick="switchTab('prices')"><i class="ti ti-currency-euro" aria-hidden="true"></i>Preise</button>
+      <button class="ntab" onclick="switchTab('diverses')"><i class="ti ti-wallet" aria-hidden="true"></i>Diverses</button>
+      <button class="ntab" onclick="switchTab('settings')"><i class="ti ti-settings" aria-hidden="true"></i>Einst.</button>
+    </div>
+    <div class="topbar-right">
+      <div class="sync-status">
+        <span class="sync-dot"></span>
+        <span>Lokal · Offline Ready</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="panel active">
+    <div id="dash-metrics" class="metrics-row"></div>
+    <div class="section-hdr">
+      <span class="section-hdr-label">Offene Positionen</span>
+      <div class="section-hdr-controls">
+        <select class="sort-select" id="dash-sort" onchange="renderDashboard()">
+          <option value="default">Sortierung: Standard</option>
+          <option value="value-desc">Nach Wert (↓)</option>
+          <option value="value-asc">Nach Wert (↑)</option>
+          <option value="pnl-desc">Nach PnL (↓)</option>
+          <option value="pnl-asc">Nach PnL (↑)</option>
+          <option value="pct-desc">Nach % (↓)</option>
+          <option value="pct-asc">Nach % (↑)</option>
+        </select>
+      </div>
+      <div class="section-hdr-line"></div>
+    </div>
+    <div class="tbl-wrap"><div id="dash-pos-table"></div></div>
+    <div class="section-hdr" style="margin-top:4px"><span class="section-hdr-label">Diverses / Cash</span><div class="section-hdr-line"></div></div>
+    <div class="tbl-wrap"><div id="dash-div-table"></div></div>
+  </div>
+
+  <!-- POSITIONEN -->
+  <div id="tab-positions" class="panel">
+    <div class="section-hdr"><span class="section-hdr-label">Alle Positionen</span><div class="section-hdr-line"></div></div>
+    <div class="tbl-wrap"><div id="pos-table"></div></div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div id="tab-trades" class="panel">
+    <div class="section-hdr"><span class="section-hdr-label">Trade Journal</span><div class="section-hdr-line"></div></div>
+    <div class="tbl-wrap"><div id="trades-table"></div></div>
+  </div>
+
+  <!-- ADD TRADE -->
+  <div id="tab-add" class="panel">
+    <div class="form-section">
+      <div class="form-section-title"><i class="ti ti-plus" style="font-size:12px" aria-hidden="true"></i>Neue Trade erfassen</div>
+      
+      <div class="form-grid">
+        <div class="field">
+          <label>Asset / Ticker *</label>
+          <input type="text" id="f-asset" placeholder="z.B. AAPL, MSFT …">
+        </div>
+        <div class="field">
+          <label>Typ *</label>
+          <select id="f-type" onchange="updateSuggestions()">
+            <option value="">— Wählen —</option>
+            <option value="BUY">Buy</option>
+            <option value="SELL">Sell</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Menge *</label>
+          <input type="number" id="f-qty" placeholder="0" step="any">
+        </div>
+        <div class="field">
+          <label>Preis *</label>
+          <input type="number" id="f-price" placeholder="0.00" step="any">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Währung *</label>
+          <select id="f-currency">
+            <option value="EUR">EUR (€)</option>
+            <option value="USD">USD ($)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Datum *</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="field">
+          <label>Gebühren</label>
+          <input type="number" id="f-fees" placeholder="0.00" step="any" value="0">
+        </div>
+        <div class="field">
+          <label>Steuer (Verkauf %)</label>
+          <input type="number" id="f-tax" placeholder="0" step="any" value="0" min="0" max="100">
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px">
+        <label>Notiz</label>
+        <input type="text" id="f-note" placeholder="Optional: Grund für Trade …">
+      </div>
+
+      <div id="suggestions" class="suggestions-box" style="display:none">
+        <div class="suggestions-label">💡 Passende Positionen:</div>
+        <div id="suggestions-list"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addTrade()"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i>Trade erfassen</button>
+        <div class="save-msg" id="save-msg"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Gespeichert!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREISE -->
+  <div id="tab-prices" class="panel">
+    <div class="form-section">
+      <div class="form-section-title"><i class="ti ti-currency-euro" style="font-size:12px" aria-hidden="true"></i>Aktuelle Kurse</div>
+      <div id="prices-table"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-primary" onclick="savePrices()"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i>Kurse speichern</button>
+        <button class="btn btn-ghost" onclick="clearPrices()"><i class="ti ti-trash" style="font-size:12px" aria-hidden="true"></i>Alle löschen</button>
+        <div class="save-msg" id="price-msg"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Gespeichert!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIVERSES -->
+  <div id="tab-diverses" class="panel">
+    <div class="form-section">
+      <div class="form-section-title"><i class="ti ti-wallet" style="font-size:12px" aria-hidden="true"></i>Diverses / Cash</div>
+      <div style="display:grid;grid-template-columns:2fr 1.4fr 1.2fr auto;gap:8px;align-items:end;margin-bottom:8px">
+        <div class="field">
+          <label>Bezeichnung</label>
+          <input type="text" class="div-input" id="d-name" placeholder="z.B. Cash, Gold, Bitcoin …">
+        </div>
+        <div class="field">
+          <label>Kategorie</label>
+          <select class="div-input" id="d-cat" style="height:30px">
+            <option value="Cash">Cash</option>
+            <option value="Crypto">Crypto</option>
+            <option value="Edelmetalle">Edelmetalle</option>
+            <option value="Immobilien">Immobilien</option>
+            <option value="Sonstiges">Sonstiges</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Wert (€)</label>
+          <input type="number" class="div-input" id="d-val" placeholder="0.00" step="any">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addDivers()"><i class="ti ti-plus" aria-hidden="true"></i></button>
+      </div>
+      <div class="save-msg" id="div-add-msg"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Hinzugefügt!</div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Übersicht</div>
+      <div class="tbl-wrap"><div id="divers-table"></div></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Nach Kategorie</div>
+      <div class="tbl-wrap"><div id="divers-summary"></div></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="panel">
+    <div class="form-section">
+      <div class="form-section-title"><i class="ti ti-settings" style="font-size:12px" aria-hidden="true"></i>Einstellungen</div>
+      
+      <div class="info-box">
+        ✅ <strong>Portfolio Terminal v3</strong><br>
+        Alle Daten werden lokal auf deinem Computer gespeichert (localStorage).<br>
+        <strong>100% Offline-Ready!</strong> Funktioniert auch ohne Internet.
+      </div>
+
+      <div style="margin-bottom:16px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px">
+        <div style="font-size:12px;color:var(--txt);margin-bottom:8px;font-weight:500">💾 Daten Backup & Export</div>
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" onclick="exportData()"><i class="ti ti-download" style="font-size:12px" aria-hidden="true"></i>Exportieren (JSON)</button>
+          <button class="btn btn-ghost btn-sm" onclick="importData()"><i class="ti ti-upload" style="font-size:12px" aria-hidden="true"></i>Importieren</button>
+          <button class="btn btn-danger btn-sm" onclick="resetAll()"><i class="ti ti-trash" style="font-size:12px" aria-hidden="true"></i>Alles löschen</button>
+        </div>
+        <div style="font-size:10px;color:var(--txt3);margin-top:8px">💡 Tipp: Regelmäßig exportieren als Backup!</div>
+      </div>
+
+      <div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px">
+        <div style="font-size:12px;color:var(--txt);margin-bottom:8px;font-weight:500">🔧 Währungskurs</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end">
+          <div class="field">
+            <label>EUR zu USD Kurs</label>
+            <input type="number" id="eur-usd-rate" placeholder="1.10" step="0.01" value="1.10" style="background:var(--bg1);border:1px solid var(--border2);color:var(--txt);font-family:var(--font);font-size:12px;height:36px;padding:0 11px;border-radius:6px;outline:none;width:100%">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary btn-sm" onclick="saveExchangeRate()"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i>Speichern</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EDIT TRADE MODAL -->
+<div id="edit-modal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeEditModal()">✕</button>
+    <div class="modal-title">Trade bearbeiten</div>
+    
+    <div class="form-grid">
+      <div class="field">
+        <label>Asset</label>
+        <input type="text" id="edit-asset" readonly style="background:var(--bg2);cursor:not-allowed">
+      </div>
+      <div class="field">
+        <label>Typ</label>
+        <select id="edit-type">
+          <option value="BUY">Buy</option>
+          <option value="SELL">Sell</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Menge</label>
+        <input type="number" id="edit-qty" step="any">
+      </div>
+      <div class="field">
+        <label>Preis</label>
+        <input type="number" id="edit-price" step="any">
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Währung</label>
+        <select id="edit-currency">
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Datum</label>
+        <input type="date" id="edit-date">
+      </div>
+      <div class="field">
+        <label>Gebühren</label>
+        <input type="number" id="edit-fees" step="any" value="0">
+      </div>
+      <div class="field">
+        <label>Steuer %</label>
+        <input type="number" id="edit-tax" step="any" value="0" min="0" max="100">
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:16px">
+      <label>Notiz</label>
+      <input type="text" id="edit-note">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEditTrade()"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i>Speichern</button>
+      <button class="btn btn-ghost" onclick="closeEditModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT DIVERSES MODAL -->
+<div id="edit-div-modal" class="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeEditDiversModal()">✕</button>
+    <div class="modal-title">Diverse bearbeiten</div>
+    
+    <div class="form-grid">
+      <div class="field">
+        <label>Bezeichnung</label>
+        <input type="text" id="edit-div-name">
+      </div>
+      <div class="field">
+        <label>Kategorie</label>
+        <select id="edit-div-cat">
+          <option value="Cash">Cash</option>
+          <option value="Crypto">Crypto</option>
+          <option value="Edelmetalle">Edelmetalle</option>
+          <option value="Immobilien">Immobilien</option>
+          <option value="Sonstiges">Sonstiges</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Wert (€)</label>
+        <input type="number" id="edit-div-val" step="any">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEditDivers()"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i>Speichern</button>
+      <button class="btn btn-ghost" onclick="closeEditDiversModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT INPUT (hidden) -->
+<input type="file" id="import-input" style="display:none" accept=".json" onchange="handleImport()">
+
+<script>
+  let trades=[];let prices={};let divers=[];
+  const K_TRADES='PT_TRADES';const K_PRICES='PT_PRICES';const K_DIVERS='PT_DIVERS';const K_EURRATE='PT_EUR_RATE';
+  
+  let eurRate=1.10;
+  let editingTradeId=null;
+  let editingDiversId=null;
+
+  function ls_set(k,v){localStorage.setItem(k,JSON.stringify(v));}
+  function ls_get(k){const x=localStorage.getItem(k);return x?JSON.parse(x):null;}
+  function ls_del(k){localStorage.removeItem(k);}
+
+  function loadData(){
+    trades=ls_get(K_TRADES)||[];prices=ls_get(K_PRICES)||{};divers=ls_get(K_DIVERS)||[];
+    eurRate=parseFloat(ls_get(K_EURRATE))||1.10;
+  }
+
+  function saveData(){
+    ls_set(K_TRADES,trades);ls_set(K_PRICES,prices);ls_set(K_DIVERS,divers);
+  }
+
+  function exportData(){
+    const data={trades,prices,divers,eurRate,timestamp:new Date().toISOString()};
+    const json=JSON.stringify(data,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='portfolio-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('✓ Backup exportiert!');
+  }
+
+  function importData(){
+    document.getElementById('import-input').click();
+  }
+
+  function handleImport(){
+    const file=document.getElementById('import-input').files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=(e)=>{
+      try{
+        const data=JSON.parse(e.target.result);
+        trades=data.trades||[];prices=data.prices||{};divers=data.divers||[];
+        eurRate=data.eurRate||1.10;
+        ls_set(K_TRADES,trades);ls_set(K_PRICES,prices);ls_set(K_DIVERS,divers);ls_set(K_EURRATE,eurRate);
+        alert('✓ Daten importiert!');
+        renderAll();
+      }catch(e){
+        alert('❌ Fehler beim Importieren: '+e.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function saveExchangeRate(){
+    const r=parseFloat(document.getElementById('eur-usd-rate').value);
+    if(isNaN(r)||r<=0){alert('Gültiger Kurs erforderlich');return;}
+    eurRate=r;
+    ls_set(K_EURRATE,r);
+    alert('✓ Kurs gespeichert!');
+  }
+
+  function fmtN(v,decimals=2){
+    if(isNaN(v)) return '—';
+    const fixed=parseFloat(v).toFixed(decimals);
+    return new Intl.NumberFormat('de-DE').format(parseFloat(fixed));
+  }
+
+  function fmtPnl(v){
+    const sign=v>=0?'+':'';
+    return sign+fmtN(v,2)+'€';
+  }
+
+  function pnlCls(v){return v>=0?'g':'r';}
+
+  function assetDot(colored){
+    return `<span class="dot" style="background:${colored?'var(--blue)':'var(--bg3)'}"></span>`;
+  }
+
+  function calcPositions(){
+    const pos={};
+    trades.forEach(t=>{
+      const k=t.asset;
+      if(!pos[k]) pos[k]={asset:k,qty:0,cost:0,realizedPnl:0,currency:t.currency||'EUR'};
+      if(t.type==='BUY'){
+        const oldVal=pos[k].qty*pos[k].cost;
+        const newVal=t.qty*t.price;
+        pos[k].qty+=t.qty;
+        pos[k].cost=(oldVal+newVal)/(pos[k].qty||1);
+      }else{
+        const soldVal=t.qty*t.price;
+        const soldCost=t.qty*pos[k].cost;
+        const gain=soldVal-soldCost;
+        pos[k].realizedPnl+=gain*(1-(t.tax||0)/100)-(t.fees||0);
+        pos[k].qty=Math.max(0,pos[k].qty-t.qty);
+      }
+    });
+    return Object.values(pos).filter(p=>p.qty>1e-6||p.realizedPnl!==0);
+  }
+
+  function updateSuggestions(){
+    const type=document.getElementById('f-type').value;
+    const container=document.getElementById('suggestions');
+    const list=document.getElementById('suggestions-list');
+    
+    if(!type){
+      container.style.display='none';return;
+    }
+
+    const pos=calcPositions();
+    let suggestions=[];
+
+    if(type==='SELL'){
+      suggestions=pos.filter(p=>p.qty>1e-6).sort((a,b)=>b.qty*b.cost-a.qty*a.cost).slice(0,5);
+    }else if(type==='BUY'){
+      suggestions=pos.filter(p=>p.qty>1e-6).sort((a,b)=>b.qty*b.cost-a.qty*a.cost).slice(0,5);
+    }
+
+    if(suggestions.length===0){
+      container.style.display='none';return;
+    }
+
+    list.innerHTML=suggestions.map(s=>`
+      <div class="suggestion-item" onclick="applySuggestion('${s.asset}',${s.qty},${s.cost},'${type}')">
+        <div class="suggestion-symbol">${s.asset}</div>
+        <div class="suggestion-info">
+          <div>${fmtN(s.qty,4)} Anteile @ €${fmtN(s.cost)}</div>
+          <div class="suggestion-qty">Wert: €${fmtN(s.qty*s.cost)}</div>
+        </div>
+        <div class="suggestion-action">${type==='SELL'?'✓ Verkaufen':'✓ Nachkaufen'}</div>
+      </div>
+    `).join('');
+
+    container.style.display='block';
+  }
+
+  function applySuggestion(asset,qty,cost,type){
+    document.getElementById('f-asset').value=asset;
+    document.getElementById('f-type').value=type;
+    document.getElementById('f-qty').value=qty;
+    document.getElementById('f-price').value=cost;
+    updateSuggestions();
+  }
+
+  function renderDashboard(){
+    const pos=calcPositions();
+    const metrics=document.getElementById('dash-metrics');
+    const curUsdRate=eurRate;
+
+    let totalValue=0,totalCost=0,totalRealPnl=0;
+    
+    pos.forEach(p=>{
+      const cur=prices[p.asset]||0;
+      if(cur>0){
+        const val=p.qty*cur;
+        const converted=p.currency==='USD'?val/curUsdRate:val;
+        totalValue+=converted;
+        totalCost+=p.qty*p.cost;
+      }
+    });
+    
+    const unrealPnl=totalValue-totalCost;
+    const totalPnl=unrealPnl+totalRealPnl;
+    const diversValue=diversTotal();
+    const totalPortfolio=totalValue+diversValue;
+
+    metrics.innerHTML=`
+      <div class="mcard">
+        <div class="mcard-label">Gesamtvermögen</div>
+        <div class="mcard-val">€${fmtN(totalPortfolio)}</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label">Aktien/ETFs</div>
+        <div class="mcard-val">€${fmtN(totalValue)}</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label">Investiert</div>
+        <div class="mcard-val">€${fmtN(totalCost)}</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label">Unrealized P&L</div>
+        <div class="mcard-val ${pnlCls(unrealPnl)}">${fmtPnl(unrealPnl)}</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label">Realized P&L</div>
+        <div class="mcard-val ${pnlCls(totalRealPnl)}">${fmtPnl(totalRealPnl)}</div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-label">Total P&L</div>
+        <div class="mcard-val ${pnlCls(totalPnl)}">${fmtPnl(totalPnl)}</div>
+        <div class="mcard-sub">${totalCost>0?fmtN((totalPnl/totalCost)*100,2)+'%':'—'}</div>
+      </div>
+    `;
+
+    let sorted=[...pos];
+    const sortBy=document.getElementById('dash-sort')?.value||'default';
+    if(sortBy==='value-desc') sorted.sort((a,b)=>(b.qty*prices[b.asset]||0)-(a.qty*prices[a.asset]||0));
+    else if(sortBy==='value-asc') sorted.sort((a,b)=>(a.qty*prices[a.asset]||0)-(b.qty*prices[b.asset]||0));
+    else if(sortBy==='pnl-desc'){
+      sorted.sort((a,b)=>{
+        const apnl=a.qty*prices[a.asset]-a.qty*a.cost;
+        const bpnl=b.qty*prices[b.asset]-b.qty*b.cost;
+        return bpnl-apnl;
+      });
+    }else if(sortBy==='pnl-asc'){
+      sorted.sort((a,b)=>{
+        const apnl=a.qty*prices[a.asset]-a.qty*a.cost;
+        const bpnl=b.qty*prices[b.asset]-b.qty*b.cost;
+        return apnl-bpnl;
+      });
+    }
+
+    const tbl=document.getElementById('dash-pos-table');
+    if(sorted.length===0){
+      tbl.innerHTML=`<div class="empty-state"><i class="ti ti-inbox" aria-hidden="true"></i>Keine offenen Positionen</div>`;
+    }else{
+      tbl.innerHTML=`<table><thead><tr><th>Asset</th><th>Menge</th><th>Kurs</th><th>Wert (€)</th><th>Ø Kosten</th><th>P&L</th><th>%</th><th>Währung</th></tr></thead><tbody>${
+        sorted.map(p=>{
+          const cur=prices[p.asset]||0;
+          const val=cur>0?p.qty*cur:0;
+          const converted=p.currency==='USD'?val/curUsdRate:val;
+          const pnl=val-p.qty*p.cost;
+          const pct=p.cost>0?(pnl/(p.qty*p.cost))*100:0;
+          return`<tr>
+            <td style="font-weight:500">${assetDot(true)} ${p.asset}</td>
+            <td class="num">${fmtN(p.qty,4)}</td>
+            <td class="num">€${fmtN(cur)}</td>
+            <td class="num">€${fmtN(converted)}</td>
+            <td class="num">€${fmtN(p.cost)}</td>
+            <td class="num ${pnlCls(pnl)}">${fmtPnl(pnl)}</td>
+            <td class="num"><span class="pct-badge ${pct>=0?'pct-pos':'pct-neg'}">${fmtN(pct,1)}%</span></td>
+            <td><span class="tag ${p.currency==='EUR'?'tag-eur':'tag-usd'}">${p.currency}</span></td>
+          </tr>`;
+        }).join('')
+      }</tbody></table>`;
+    }
+
+    const divTbl=document.getElementById('dash-div-table');
+    if(divers.length===0){
+      divTbl.innerHTML=`<div class="empty-state" style="padding:20px"><span style="color:var(--txt3)">Keine Diverse erfasst</span></div>`;
+    }else{
+      divTbl.innerHTML=`<table><thead><tr><th>Bezeichnung</th><th>Kategorie</th><th>Wert (€)</th></tr></thead><tbody>${
+        divers.map(d=>`<tr><td style="font-weight:500">${d.name}</td><td><span class="tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid #f4a80030">${d.cat}</span></td><td class="num">€${fmtN(d.val)}</td></tr>`).join('')
+      }<tr style="background:var(--bg2)"><td style="font-weight:500;color:var(--txt2)">Gesamt</td><td></td><td class="num" style="font-weight:500;color:var(--amber)">€${fmtN(diversTotal())}</td></tr></tbody></table>`;
+    }
+  }
+
+  function renderPositions(){
+    const pos=calcPositions();
+    const tbl=document.getElementById('pos-table');
+    if(pos.length===0){
+      tbl.innerHTML=`<div class="empty-state"><i class="ti ti-inbox" aria-hidden="true"></i>Noch keine Positionen</div>`;return;
+    }
+    tbl.innerHTML=`<table><thead><tr><th>Asset</th><th>Menge</th><th>Ø Kosten €</th><th>Gesamtkosten</th><th>Realized P&L</th><th>Typ</th></tr></thead><tbody>${
+      pos.map(p=>`<tr>
+        <td style="font-weight:500">${assetDot(true)} ${p.asset}</td>
+        <td class="num">${fmtN(p.qty,4)}</td>
+        <td class="num">€${fmtN(p.cost)}</td>
+        <td class="num">€${fmtN(p.qty*p.cost)}</td>
+        <td class="num ${pnlCls(p.realizedPnl)}">${fmtPnl(p.realizedPnl)}</td>
+        <td><span class="tag ${p.currency==='EUR'?'tag-eur':'tag-usd'}">${p.currency}</span></td>
+      </tr>`).join('')
+    }</tbody></table>`;
+  }
+
+  function renderTrades(){
+    const tbl=document.getElementById('trades-table');
+    if(trades.length===0){
+      tbl.innerHTML=`<div class="empty-state"><i class="ti ti-list" aria-hidden="true"></i>Kein Trade Journal</div>`;return;
+    }
+    tbl.innerHTML=`<table><thead><tr><th>Datum</th><th>Asset</th><th>Typ</th><th>Menge</th><th>Preis</th><th>Total</th><th>Gebühren</th><th>Steuer</th><th>Währung</th><th>Notiz</th><th></th></tr></thead><tbody>${
+      [...trades].reverse().map(t=>{
+        const total=t.qty*t.price;
+        const tax=(total*(t.tax||0)/100);
+        const fees=t.fees||0;
+        return`<tr>
+          <td>${t.date}</td>
+          <td style="font-weight:500">${t.asset}</td>
+          <td><span class="tag ${t.type==='BUY'?'tag-buy':'tag-sell'}">${t.type}</span></td>
+          <td class="num">${fmtN(t.qty,4)}</td>
+          <td class="num">€${fmtN(t.price)}</td>
+          <td class="num">€${fmtN(total)}</td>
+          <td class="num">€${fmtN(fees)}</td>
+          <td class="num">€${fmtN(tax)}</td>
+          <td><span class="tag ${t.currency==='EUR'?'tag-eur':'tag-usd'}">${t.currency||'EUR'}</span></td>
+          <td style="font-size:10px;color:var(--txt3)">${t.note?t.note.slice(0,20)+'…':'—'}</td>
+          <td style="white-space:normal"><div class="action-buttons"><button class="btn btn-edit" onclick="editTrade(${t.id})" title="Bearbeiten"><i class="ti ti-edit" aria-hidden="true"></i></button><button class="btn btn-delete" onclick="deleteTrade(${t.id})" title="Löschen"><i class="ti ti-trash" aria-hidden="true"></i></button></div></td>
+        </tr>`;
+      }).join('')
+    }</tbody></table>`;
+  }
+
+  function renderPricesTab(){
+    const open=calcPositions().filter(p=>p.qty>1e-6);
+    const tbl=document.getElementById('prices-table');
+    if(open.length===0){
+      tbl.innerHTML=`<div class="empty-state" style="padding:20px"><span style="color:var(--txt3)">Keine offenen Positionen</span></div>`;return;
+    }
+    tbl.innerHTML=`<table><thead><tr><th>Asset</th><th>Menge</th><th>Ø Kosten</th><th>Aktueller Kurs</th><th>P&L Preview</th></tr></thead><tbody>${
+      open.map(p=>{
+        const cur=prices[p.asset]||'';
+        const u=cur?(p.qty*cur-p.qty*p.cost):null;
+        return`<tr>
+          <td style="font-weight:500">${assetDot(true)} ${p.asset}</td>
+          <td class="num">${fmtN(p.qty,4)}</td>
+          <td class="num">€${fmtN(p.cost)}</td>
+          <td><input class="price-input" id="pi-${p.asset}" type="number" step="any" placeholder="Kurs …" value="${cur}" oninput="previewPnl('${p.asset}',${p.qty},${p.cost})"></td>
+          <td class="num" id="pnl-${p.asset}">${u!=null?`<span class="${pnlCls(u)}">${fmtPnl(u)}</span>`:`<span style="color:var(--txt3);font-size:11px">—</span>`}</td>
+        </tr>`;
+      }).join('')
+    }</tbody></table>`;
+  }
+
+  function previewPnl(asset,qty,avgCost){
+    const el=document.getElementById('pi-'+asset);
+    const pnlEl=document.getElementById('pnl-'+asset);
+    const val=parseFloat(el.value);
+    if(isNaN(val)||val<=0){pnlEl.innerHTML=`<span style="color:var(--txt3);font-size:11px">—</span>`;return;}
+    const u=qty*val-qty*avgCost;
+    pnlEl.innerHTML=`<span class="${pnlCls(u)}">${fmtPnl(u)}</span>`;
+  }
+
+  function savePrices(){
+    const open=calcPositions().filter(p=>p.qty>1e-6);
+    open.forEach(p=>{
+      const el=document.getElementById('pi-'+p.asset);
+      if(el&&el.value!=='') prices[p.asset]=parseFloat(el.value);
+      else if(el&&el.value==='') delete prices[p.asset];
+    });
+    saveData();
+    const msg=document.getElementById('price-msg');msg.style.display='flex';setTimeout(()=>msg.style.display='none',2000);
+    renderAll();
+  }
+
+  function clearPrices(){
+    if(!confirm('Alle manuellen Kurse löschen?')) return;
+    prices={};
+    saveData();
+    renderPricesTab();renderAll();
+  }
+
+  function diversTotal(){
+    return divers.reduce((sum,d)=>sum+parseFloat(d.val||0),0);
+  }
+
+  function addDivers(){
+    const name=document.getElementById('d-name').value.trim();
+    const cat=document.getElementById('d-cat').value;
+    const val=parseFloat(document.getElementById('d-val').value);
+    if(!name||isNaN(val)||val<0){alert('Bezeichnung und Wert sind Pflichtfelder.');return;}
+    divers.push({id:Date.now(),name,cat,val});
+    saveData();
+    document.getElementById('d-name').value='';
+    document.getElementById('d-val').value='';
+    const msg=document.getElementById('div-add-msg');msg.style.display='flex';setTimeout(()=>msg.style.display='none',2000);
+    renderAll();
+  }
+
+  function editDivers(id){
+    const div=divers.find(d=>d.id===id);
+    if(!div) return;
+    
+    editingDiversId=id;
+    document.getElementById('edit-div-name').value=div.name;
+    document.getElementById('edit-div-cat').value=div.cat;
+    document.getElementById('edit-div-val').value=div.val;
+    
+    document.getElementById('edit-div-modal').classList.add('active');
+  }
+
+  function closeEditDiversModal(){
+    document.getElementById('edit-div-modal').classList.remove('active');
+    editingDiversId=null;
+  }
+
+  function saveEditDivers(){
+    if(!editingDiversId) return;
+    
+    const div=divers.find(d=>d.id===editingDiversId);
+    if(!div) return;
+    
+    div.name=document.getElementById('edit-div-name').value.trim();
+    div.cat=document.getElementById('edit-div-cat').value;
+    div.val=parseFloat(document.getElementById('edit-div-val').value);
+    
+    saveData();
+    closeEditDiversModal();
+    renderAll();
+    alert('✓ Diverse aktualisiert!');
+  }
+
+  function editTrade(id){
+    const trade=trades.find(t=>t.id===id);
+    if(!trade) return;
+    
+    editingTradeId=id;
+    document.getElementById('edit-asset').value=trade.asset;
+    document.getElementById('edit-type').value=trade.type;
+    document.getElementById('edit-qty').value=trade.qty;
+    document.getElementById('edit-price').value=trade.price;
+    document.getElementById('edit-currency').value=trade.currency||'EUR';
+    document.getElementById('edit-date').value=trade.date;
+    document.getElementById('edit-fees').value=trade.fees||0;
+    document.getElementById('edit-tax').value=trade.tax||0;
+    document.getElementById('edit-note').value=trade.note||'';
+    
+    document.getElementById('edit-modal').classList.add('active');
+  }
+
+  function closeEditModal(){
+    document.getElementById('edit-modal').classList.remove('active');
+    editingTradeId=null;
+  }
+
+  function saveEditTrade(){
+    if(!editingTradeId) return;
+    
+    const trade=trades.find(t=>t.id===editingTradeId);
+    if(!trade) return;
+    
+    trade.type=document.getElementById('edit-type').value;
+    trade.qty=parseFloat(document.getElementById('edit-qty').value);
+    trade.price=parseFloat(document.getElementById('edit-price').value);
+    trade.currency=document.getElementById('edit-currency').value;
+    trade.date=document.getElementById('edit-date').value;
+    trade.fees=parseFloat(document.getElementById('edit-fees').value)||0;
+    trade.tax=parseFloat(document.getElementById('edit-tax').value)||0;
+    trade.note=document.getElementById('edit-note').value;
+    
+    saveData();
+    closeEditModal();
+    renderAll();
+    alert('✓ Trade aktualisiert!');
+  }
+
+  function addTrade(){
+    const a=document.getElementById('f-asset').value.trim().toUpperCase();
+    const t=document.getElementById('f-type').value;
+    const q=parseFloat(document.getElementById('f-qty').value);
+    const p=parseFloat(document.getElementById('f-price').value);
+    const d=document.getElementById('f-date').value;
+    const cur=document.getElementById('f-currency').value;
+    const fees=parseFloat(document.getElementById('f-fees').value)||0;
+    const tax=parseFloat(document.getElementById('f-tax').value)||0;
+    const n=document.getElementById('f-note').value.trim();
+    
+    if(!a||!t||isNaN(q)||q<=0||isNaN(p)||p<0||!d){
+      alert('Bitte alle Pflichtfelder ausfüllen.');return;
+    }
+    
+    trades.push({id:Date.now(),asset:a,type:t,qty:q,price:p,date:d,currency:cur,fees,tax,note:n});
+    saveData();
+    
+    ['f-asset','f-qty','f-price','f-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-type').value='';
+    document.getElementById('f-fees').value='0';
+    document.getElementById('f-tax').value='0';
+    
+    const msg=document.getElementById('save-msg');msg.style.display='flex';setTimeout(()=>msg.style.display='none',2500);
+    updateSuggestions();
+    renderAll();
+  }
+
+  function deleteTrade(id){
+    if(!confirm('Trade wirklich löschen?'))return;
+    trades=trades.filter(t=>t.id!==id);
+    saveData();
+    renderAll();
+  }
+
+  function resetAll(){
+    if(!confirm('Wirklich ALLE Daten löschen?'))return;
+    trades=[];prices={};divers=[];
+    [K_TRADES,K_PRICES,K_DIVERS].forEach(k=>ls_del(k));
+    renderAll();
+  }
+
+  function switchTab(n){
+    ['dashboard','positions','trades','add','prices','diverses','settings'].forEach((t,i)=>{
+      const tab=document.getElementById('tab-'+t);
+      const ntab=document.querySelectorAll('.ntab')[i];
+      if(t===n){
+        if(ntab) ntab.classList.add('active');
+        if(tab) tab.classList.add('active');
+      }else{
+        if(ntab) ntab.classList.remove('active');
+        if(tab) tab.classList.remove('active');
+      }
+    });
+    if(n==='prices') renderPricesTab();
+  }
+
+  function renderAll(){renderDashboard();renderPositions();renderTrades();renderDiversTable();}
+
+  function renderDiversTable(){
+    const tbl=document.getElementById('divers-table');
+    if(divers.length===0){
+      tbl.innerHTML=`<div class="empty-state" style="padding:20px"><span style="color:var(--txt3)">Keine Diverse erfasst</span></div>`;
+      return;
+    }
+    tbl.innerHTML=`<table><thead><tr><th>Bezeichnung</th><th>Kategorie</th><th>Wert (€)</th><th></th></tr></thead><tbody>${
+      divers.map(d=>`<tr>
+        <td style="font-weight:500">${d.name}</td>
+        <td><span class="tag" style="background:var(--amber-bg);color:var(--amber);border:1px solid #f4a80030">${d.cat}</span></td>
+        <td class="num">€${fmtN(d.val)}</td>
+        <td style="white-space:normal"><div class="action-buttons"><button class="btn btn-edit" onclick="editDivers(${d.id})" title="Bearbeiten"><i class="ti ti-edit" aria-hidden="true"></i></button><button class="btn btn-delete" onclick="deleteDivers(${d.id})" title="Löschen"><i class="ti ti-trash" aria-hidden="true"></i></button></div></td>
+      </tr>`).join('')
+    }</tbody></table>`;
+  }
+
+  function deleteDivers(id){
+    if(!confirm('Eintrag löschen?'))return;
+    divers=divers.filter(d=>d.id!==id);
+    saveData();
+    renderAll();
+  }
+
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  loadData();
+  document.getElementById('eur-usd-rate').value=eurRate;
+  renderAll();
+</script>
+
+</body>
+</html>
